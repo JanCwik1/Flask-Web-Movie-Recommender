@@ -7,22 +7,13 @@ app = Flask(__name__)
 API_KEY = "123123test"
 
 
-def shutdown_server():
-    func = request.environ.get('werkzeug.server.shutdown')
-    if func is None:
-        raise RuntimeError('Not running with the Werkzeug Server')
-    func()
-
-
 @app.route('/')
 def welcome():
     return 'Welcome'
 
-
 @app.route('/hello')
 def hello_world():
     return 'Hello World'
-
 
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
@@ -34,9 +25,15 @@ def shutdown():
     if not auth_header or auth_header != f"Bearer {API_KEY}":
         return jsonify({'error': 'Invalid API key'}), 401  # Unauthorized
 
-    shutdown_server()
-    return 'Server shutting down...'
+    def shutdown_app():
+        app.logger.info('Stopping application...')
+        app.jinja_env.cache = {}  # Clear Jinja template cache (optional)
+        # Aadd other cleanup tasks here (closing databases, connections, etc.)
+        os._exit(0)  # Exit the process
 
+    with app.app_context():
+        shutdown_app()
+    return 'Server shutting down...'
 
 if __name__ == '__main__':
     app.run()
