@@ -30,12 +30,27 @@ else:
 movie_entries = soup.find_all('h3', class_='ipc-title__text')  # Original selector
 
 init1 = soup.find('div', attrs={"data-testid": "chart-layout-main-column"})
-init1 = init1.find_all('h3', attrs={"class": "ipc-title__text"})
+init2 = init1.find_all('h3', attrs={"class": "ipc-title__text"})
+init3 = init1.find_all('div', attrs={"class": "cli-title-metadata"})
 best_movies_text = []
+movie_details = []
 
-for x in init1:
-    movie_text = x.get_text()
-    best_movies_text.append(movie_text)
+for movie_name, movie_metadata in zip(init2, init3):
+    movie_name = movie_name.get_text()
+
+    counter = 0
+    for data in movie_metadata:
+        match counter:
+            case 0:
+                movie_year = data.get_text()
+            case 1:
+                movie_length = data.get_text()
+            case 2:
+                movie_age_rating = data.get_text()
+        counter +=1
+
+    movie_details = [movie_name, movie_year, movie_length, movie_age_rating]
+    best_movies_text.append(movie_details)
 
 @app.route('/')
 def welcome():
@@ -49,7 +64,7 @@ def hello_world():
 def random_movie():
     random_index = get_random_index(best_movies_text)
     random_element = best_movies_text[random_index]
-    return f'You should check out: {random_element}'
+    return f'You should check out: {random_element[0]}, Year of release: {random_element[1]}, Length of movie: {random_element[2]}, Age rating for movie: {random_element[3]}'
 
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
